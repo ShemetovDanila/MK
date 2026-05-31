@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\МК\\MK_code\\mk_project\\mk_project.csproj",
+      "projectUniqueName": "D:\\MK\\MK_code\\mk_project\\mk_project.csproj",
       "projectName": "mk_project",
-      "projectPath": "D:\\МК\\MK_code\\mk_project\\mk_project.csproj",
+      "projectPath": "D:\\MK\\MK_code\\mk_project\\mk_project.csproj",
       "packagesPath": "C:\\Users\\0illi\\.nuget\\packages\\",
-      "outputPath": "D:\\МК\\MK_code\\mk_project\\obj\\",
+      "outputPath": "D:\\MK\\MK_code\\mk_project\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\0illi\\AppData\\Roaming\\NuGet\\NuGet.Config",

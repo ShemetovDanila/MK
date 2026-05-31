@@ -1,0 +1,7 @@
+int a;
+begin
+    read(a);
+    if (a > 0) then
+        a = a + 10;
+    write(a);
+end

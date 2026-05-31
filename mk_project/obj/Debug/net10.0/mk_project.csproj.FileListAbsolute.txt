@@ -1,0 +1,15 @@
+D:\MK\MK_code\mk_project\bin\Debug\net10.0\mk_project.exe
+D:\MK\MK_code\mk_project\bin\Debug\net10.0\mk_project.deps.json
+D:\MK\MK_code\mk_project\bin\Debug\net10.0\mk_project.runtimeconfig.json
+D:\MK\MK_code\mk_project\bin\Debug\net10.0\mk_project.dll
+D:\MK\MK_code\mk_project\bin\Debug\net10.0\mk_project.pdb
+D:\MK\MK_code\mk_project\obj\Debug\net10.0\mk_project.GeneratedMSBuildEditorConfig.editorconfig
+D:\MK\MK_code\mk_project\obj\Debug\net10.0\mk_project.AssemblyInfoInputs.cache
+D:\MK\MK_code\mk_project\obj\Debug\net10.0\mk_project.AssemblyInfo.cs
+D:\MK\MK_code\mk_project\obj\Debug\net10.0\mk_project.csproj.CoreCompileInputs.cache
+D:\MK\MK_code\mk_project\obj\Debug\net10.0\mk_project.sourcelink.json
+D:\MK\MK_code\mk_project\obj\Debug\net10.0\mk_project.dll
+D:\MK\MK_code\mk_project\obj\Debug\net10.0\refint\mk_project.dll
+D:\MK\MK_code\mk_project\obj\Debug\net10.0\mk_project.pdb
+D:\MK\MK_code\mk_project\obj\Debug\net10.0\mk_project.genruntimeconfig.cache
+D:\MK\MK_code\mk_project\obj\Debug\net10.0\ref\mk_project.dll

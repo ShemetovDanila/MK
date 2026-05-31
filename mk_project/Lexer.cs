@@ -66,7 +66,8 @@ public class Lexer
     private readonly Dictionary<string, int> keywords = new Dictionary<string, int>
     {
         { "int", 1 }, { "int1", 2 }, { "if", 3 }, { "then", 4 },
-        { "else", 5 }, { "while", 6 }, { "do", 7 }, { "read", 8 }, { "write", 9 }
+        { "else", 5 }, { "while", 6 }, { "do", 7 }, { "read", 8 },
+        { "write", 9 }, { "begin", 30 }, { "end", 31 }
     };
 
     private readonly Dictionary<char, int> singleSigns = new Dictionary<char, int>
