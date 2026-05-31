@@ -1,7 +1,5 @@
 int a;
 begin
-    read(a);
-    if (a > 0) then
-        a = a + 10;
+    a = 5;
     write(a);
 end

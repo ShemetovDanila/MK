@@ -1,105 +1,130 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 public class Interpreter
 {
-    // Оперативная память виртуальной машины
+    // Оперативная память для простых переменных: имя → значение
     private Dictionary<string, double> variables = new Dictionary<string, double>();
-    
-    // Единый вычислительный стек для данных и адресов
+
+    // Память для массивов: имя массива → (индекс → значение)
+    private Dictionary<string, Dictionary<int, double>> arrays =
+        new Dictionary<string, Dictionary<int, double>>();
+
+    // Строковый стек операндов виртуальной машины
     private Stack<string> stack = new Stack<string>();
 
-    // Разыменование операнда: преобразует имя переменной или строку в double
+    // ── Разыменование токена в числовое значение ──────────────────────────
+    // Поддерживает: числовые константы, ячейки массива "arr[i]", переменные.
     private double GetValue(string token)
     {
-        if (double.TryParse(token, out double num))
-        {
+        // Числовая константа (включая результаты вычислений с точкой)
+        if (double.TryParse(token, NumberStyles.Any, CultureInfo.InvariantCulture, out double num))
             return num;
-        }
-        if (variables.ContainsKey(token))
+
+        // Ячейка массива вида "arr[3]"
+        if (token.Contains("[") && token.Contains("]"))
         {
-            return variables[token];
+            string arrName = token.Substring(0, token.IndexOf('['));
+            int idx = int.Parse(token.Substring(
+                token.IndexOf('[') + 1,
+                token.IndexOf(']') - token.IndexOf('[') - 1));
+
+            if (arrays.ContainsKey(arrName) && arrays[arrName].ContainsKey(idx))
+                return arrays[arrName][idx];
+            return 0.0; // неинициализированная ячейка = 0
         }
-        return 0; // Неинициализированные переменные по умолчанию равны 0
+
+        // Обычная переменная
+        if (variables.ContainsKey(token))
+            return variables[token];
+
+        return 0.0;
     }
 
+    // ── Форматирование числа для вывода ───────────────────────────────────
+    // Использует инвариантную культуру, чтобы '.' всегда было десятичным разделителем.
+    private string FormatNumber(double val)
+    {
+        // Если значение целое — выводим без дробной части
+        if (val == Math.Floor(val) && !double.IsInfinity(val))
+            return ((long)val).ToString();
+        return val.ToString("G", CultureInfo.InvariantCulture);
+    }
+
+    // ── Основной цикл исполнения ОПС ──────────────────────────────────────
     public void Execute(List<string> rpn)
     {
         Console.WriteLine("[Interpreter]: Исполнение ОПС начато...");
-        int pc = 0; // Указатель командной строки
+        int pc = 0;
 
         while (pc < rpn.Count)
         {
             string command = rpn[pc];
 
+            // ── bp: начало блока (no-op) ─────────────────────────────────
             if (command == "bp") { pc++; continue; }
 
+            // ── ret: завершение программы ────────────────────────────────
             if (command == "ret")
             {
                 Console.WriteLine("[Interpreter]: Программа завершила работу (команда ret).");
                 break;
             }
 
-            // Операция ввода ввода 'r' (read)
+            // ── r: ввод (read) ───────────────────────────────────────────
             if (command == "r")
             {
                 if (stack.Count > 0)
                 {
-                    string varName = stack.Pop(); // Сверху стека лежит чистое имя переменной
+                    string varName = stack.Pop();
                     Console.Write($"Введите значение для {varName}: ");
                     string? input = Console.ReadLine();
-                    
-                    if (double.TryParse(input, out double val))
+
+                    if (double.TryParse(input, NumberStyles.Any,
+                                        CultureInfo.InvariantCulture, out double val))
                     {
-                        variables[varName] = val;
+                        if (varName.Contains("["))
+                            AssignToArray(varName, val);
+                        else
+                            variables[varName] = val;
                     }
                     else
                     {
-                        Console.WriteLine("[Ошибка выполнения]: Неверный формат числового ввода.");
-                        return;
+                        Console.WriteLine($"[Предупреждение]: Не удалось прочитать число для '{varName}', присвоено 0.");
+                        if (varName.Contains("["))
+                            AssignToArray(varName, 0.0);
+                        else
+                            variables[varName] = 0.0;
                     }
                 }
                 pc++;
                 continue;
             }
 
-            // Операция вывода 'w' (write)
+            // ── w: вывод (write) ─────────────────────────────────────────
             if (command == "w")
             {
                 if (stack.Count > 0)
                 {
-                    double val = GetValue(stack.Pop()); // Разыменовываем значение перед выводом
-                    Console.WriteLine($"Вывод: {val}");
-                }
-                else
-                {
-                    Console.WriteLine("[Ошибка выполнения]: Стек пуст. Нечего выводить.");
-                    return;
+                    double val = GetValue(stack.Pop());
+                    Console.WriteLine($"Вывод: {FormatNumber(val)}");
                 }
                 pc++;
                 continue;
             }
 
-            // Условный переход Jump if False (jf)
+            // ── jf: условный переход по лжи ─────────────────────────────
             if (command == "jf")
             {
-                // Постфиксный вид: [условие] [адрес] jf
-                int targetAddress = (int)GetValue(stack.Pop()); // Вершина стека — адрес перехода
-                double condition = GetValue(stack.Pop());      // Под ней — результат логического условия
+                int targetAddress = (int)GetValue(stack.Pop());
+                double condition  = GetValue(stack.Pop());
 
-                if (condition == 0)
-                {
-                    pc = targetAddress; // Переходим, если ложь
-                    continue;
-                }
-                else
-                {
-                    pc++; // Идем дальше, если истина
-                    continue;
-                }
+                pc = (condition == 0.0) ? targetAddress : pc + 1;
+                continue;
             }
 
-            // Безусловный переход (УП)
+            // ── УП: безусловный переход ───────────────────────────────────
             if (command == "УП")
             {
                 int targetAddress = (int)GetValue(stack.Pop());
@@ -107,72 +132,101 @@ public class Interpreter
                 continue;
             }
 
-            // Операция присваивания '='
+            // ── index: формирование строкового адреса ячейки массива ─────
+            if (command == "index")
+            {
+                int idx        = (int)GetValue(stack.Pop()); // вычисленный индекс
+                string arrName = stack.Pop();                 // имя массива
+                stack.Push($"{arrName}[{idx}]");
+                pc++;
+                continue;
+            }
+
+            // ── =: присваивание ──────────────────────────────────────────
             if (command == "=")
             {
                 if (stack.Count >= 2)
                 {
-                    // Постфиксный вид: a [выражение] =
-                    double val = GetValue(stack.Pop()); // Результат выражения сверху стека
-                    string varName = stack.Pop();       // Имя переменной под ним
+                    double val     = GetValue(stack.Pop()); // значение
+                    string varName = stack.Pop();            // целевая переменная / ячейка
 
-                    if (double.TryParse(varName, out _))
-                    {
-                        Console.WriteLine("[Ошибка выполнения]: Левая часть присваивания должна быть переменной.");
-                        return;
-                    }
-
-                    variables[varName] = val;
+                    if (varName.Contains("["))
+                        AssignToArray(varName, val);
+                    else
+                        variables[varName] = val;
                 }
                 pc++;
                 continue;
             }
 
-            // Математические и логические операции
-            if (command == "+" || command == "-" || command == "*" || command == "/" || 
-                command == ">" || command == "<" || command == "==" || command == "!=" || command == "<=" || command == ">=")
+            // ИСПРАВЛЕНИЕ #7: neg — унарный минус ─────────────────────────
+            if (command == "neg")
+            {
+                double operand = GetValue(stack.Pop());
+                stack.Push((-operand).ToString("G", CultureInfo.InvariantCulture));
+                pc++;
+                continue;
+            }
+
+            // ── Бинарные операции: арифметика и сравнение ────────────────
+            if (command == "+" || command == "-" || command == "*" || command == "/" ||
+                command == ">"  || command == "<"  || command == "==" ||
+                command == "!=" || command == "<=" || command == ">=")
             {
                 if (stack.Count < 2)
                 {
-                    Console.WriteLine($"[Ошибка выполнения]: Недостаточно операндов для операции '{command}'");
-                    return;
+                    Console.WriteLine($"[Ошибка интерпретатора]: Недостаточно операндов для '{command}'.");
+                    break;
                 }
 
-                double b = GetValue(stack.Pop()); // Второй операнд (сверху)
-                double a = GetValue(stack.Pop()); // Первый операнд (снизу)
-                double result = 0;
+                double b      = GetValue(stack.Pop());
+                double a      = GetValue(stack.Pop());
+                double result = 0.0;
 
                 switch (command)
                 {
-                    case "+": result = a + b; break;
-                    case "-": result = a - b; break;
-                    case "*": result = a * b; break;
-                    case "/": 
-                        if (b == 0) { Console.WriteLine("[Ошибка выполнения]: Деление на ноль."); return; }
-                        result = a / b; 
+                    case "+":  result = a + b; break;
+                    case "-":  result = a - b; break;
+                    case "*":  result = a * b; break;
+                    // ИСПРАВЛЕНИЕ #8: защита от деления на ноль
+                    case "/":
+                        if (b == 0.0)
+                        {
+                            Console.WriteLine("[Ошибка времени выполнения]: Деление на ноль.");
+                            return;
+                        }
+                        result = a / b;
                         break;
-                    case ">":  result = a > b ? 1 : 0; break;
-                    case "<":  result = a < b ? 1 : 0; break;
-                    case "==": result = a == b ? 1 : 0; break;
-                    case "!=": result = a != b ? 1 : 0; break;
-                    case "<=": result = a <= b ? 1 : 0; break;
-                    case ">=": result = a >= b ? 1 : 0; break;
+                    case ">":  result = a >  b ? 1.0 : 0.0; break;
+                    case "<":  result = a <  b ? 1.0 : 0.0; break;
+                    case "==": result = a == b ? 1.0 : 0.0; break;
+                    case "!=": result = a != b ? 1.0 : 0.0; break;
+                    case "<=": result = a <= b ? 1.0 : 0.0; break;
+                    case ">=": result = a >= b ? 1.0 : 0.0; break;
                 }
 
-                stack.Push(result.ToString()); // Результат возвращается на стек как строковое число
+                stack.Push(result.ToString("G", CultureInfo.InvariantCulture));
                 pc++;
                 continue;
             }
 
-            // Если элемент — операнд (число или имя переменной), просто пушим его на стек
-            if (command != "jf" && command != "ret" && command != "bp" && command != "УП" && command != "w" && command != "r" && command != "=")
-            {
-                stack.Push(command);
-            }
-
+            // ── Всё остальное — операнд, кладём на стек ──────────────────
+            stack.Push(command);
             pc++;
         }
+    }
 
-        Console.WriteLine("[Interpreter]: Программа успешно выполнена.");
+    // ── Запись значения в ячейку массива ─────────────────────────────────
+    private void AssignToArray(string token, double value)
+    {
+        string arrName = token.Substring(0, token.IndexOf('['));
+        int idx = int.Parse(token.Substring(
+            token.IndexOf('[') + 1,
+            token.IndexOf(']') - token.IndexOf('[') - 1));
+
+        if (!arrays.ContainsKey(arrName))
+            arrays[arrName] = new Dictionary<int, double>();
+
+        arrays[arrName][idx] = value;
     }
 }
