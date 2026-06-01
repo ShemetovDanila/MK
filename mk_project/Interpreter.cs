@@ -15,7 +15,8 @@ public class Interpreter
         if (token.Contains("[") && token.Contains("]"))
         {
             string arrName = token.Substring(0, token.IndexOf('['));
-            int idx = int.Parse(token.Substring(token.IndexOf('[') + 1, token.IndexOf(']') - token.IndexOf('[') - 1));
+            string idxStr = token.Substring(token.IndexOf('[') + 1, token.IndexOf(']') - token.IndexOf('[') - 1);
+            int idx = (int)double.Parse(idxStr, CultureInfo.InvariantCulture);
             return (arrays.ContainsKey(arrName) && arrays[arrName].ContainsKey(idx)) ? arrays[arrName][idx] : 0.0;
         }
         if (variables.ContainsKey(token)) return variables[token];
@@ -30,7 +31,9 @@ public class Interpreter
 
     public void Execute(List<string> rpn)
     {
+        Console.WriteLine("[Interpreter]:");
         int pc = 0;
+        stack.Clear();
         while (pc < rpn.Count)
         {
             string command = rpn[pc];
@@ -54,9 +57,9 @@ public class Interpreter
 
             if (command == "index")
             {
-                int idx = (int)GetValue(stack.Pop());
+                double idxVal = GetValue(stack.Pop());
                 string arrName = stack.Pop();
-                stack.Push($"{arrName}[{idx}]");
+                stack.Push($"{arrName}[{(int)idxVal}]");
                 pc++; continue;
             }
 
@@ -72,12 +75,20 @@ public class Interpreter
             if (command == "w")
             {
                 double val = GetValue(stack.Pop());
-                Console.WriteLine(FormatNumber(val)); // Чистый вывод
+                Console.WriteLine(FormatNumber(val));
+                pc++; continue;
+            }
+
+            if (command == "neg")
+            {
+                double val = GetValue(stack.Pop());
+                stack.Push((-val).ToString(CultureInfo.InvariantCulture));
                 pc++; continue;
             }
 
             if (command == "+" || command == "-" || command == "*" || command == "/" ||
-                command == ">" || command == "<" || command == "==")
+                command == ">" || command == "<" || command == "==" || command == "!=" ||
+                command == "<=" || command == ">=")
             {
                 double b = GetValue(stack.Pop());
                 double a = GetValue(stack.Pop());
@@ -91,6 +102,9 @@ public class Interpreter
                     case ">": res = (a > b) ? 1.0 : 0.0; break;
                     case "<": res = (a < b) ? 1.0 : 0.0; break;
                     case "==": res = (a == b) ? 1.0 : 0.0; break;
+                    case "!=": res = (a != b) ? 1.0 : 0.0; break;
+                    case "<=": res = (a <= b) ? 1.0 : 0.0; break;
+                    case ">=": res = (a >= b) ? 1.0 : 0.0; break;
                 }
                 stack.Push(res.ToString(CultureInfo.InvariantCulture));
                 pc++; continue;
@@ -104,7 +118,8 @@ public class Interpreter
     private void AssignToArray(string token, double value)
     {
         string arrName = token.Substring(0, token.IndexOf('['));
-        int idx = int.Parse(token.Substring(token.IndexOf('[') + 1, token.IndexOf(']') - token.IndexOf('[') - 1));
+        string idxStr = token.Substring(token.IndexOf('[') + 1, token.IndexOf(']') - token.IndexOf('[') - 1);
+        int idx = (int)double.Parse(idxStr, CultureInfo.InvariantCulture);
         if (!arrays.ContainsKey(arrName)) arrays[arrName] = new Dictionary<int, double>();
         arrays[arrName][idx] = value;
     }
