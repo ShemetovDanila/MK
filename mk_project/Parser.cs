@@ -14,7 +14,7 @@ public class Parser
                       ACT_LE = -28, ACT_GE = -29, ACT_INDEX = -30, ACT_NEG = -31, ACT_WHILE_START = -32, 
                       ACT_WHILE_JF = -33, ACT_WHILE_END = -34, ACT_IF_JF = -35, ACT_IF_ELSE = -36, ACT_IF_END = -37;
 
-    private readonly int[,] parsingTable = new int[17, 100]; // Увеличили размер для запаса по ID
+    private readonly int[,] parsingTable = new int[17, 100]; 
     private Stack<int> whileStartStack = new Stack<int>(), whileJfStack = new Stack<int>(), ifLabelStack = new Stack<int>();
 
     public Parser() { InitializeParsingTable(); }
@@ -23,37 +23,32 @@ public class Parser
     {
         for (int i = 0; i < 17; i++) for (int j = 0; j < 100; j++) parsingTable[i, j] = -1;
 
-        // Программа и объявления
-        parsingTable[NT_P - 100, 1] = 1;  // int
-        parsingTable[NT_P - 100, 2] = 2;  // int1
-        parsingTable[NT_P - 100, 30] = 3; // begin
+        parsingTable[NT_P - 100, 1] = 1;  
+        parsingTable[NT_P - 100, 2] = 2;  
+        parsingTable[NT_P - 100, 30] = 3; 
 
-        parsingTable[NT_R - 100, 10] = 4; // id
+        parsingTable[NT_R - 100, 10] = 4; 
         parsingTable[NT_R - 100, 1] = 0; parsingTable[NT_R - 100, 2] = 0; parsingTable[NT_R - 100, 30] = 0;
 
-        parsingTable[NT_L - 100, 10] = 6; // id
+        parsingTable[NT_L - 100, 10] = 6; 
         parsingTable[NT_L - 100, 1] = 0; parsingTable[NT_L - 100, 2] = 0; parsingTable[NT_L - 100, 30] = 0;
 
-        // Список операторов
         foreach (int id in new[] { 10, 3, 6, 8, 9, 30 }) parsingTable[NT_LIST - 100, id] = 43;
-        parsingTable[NT_LIST - 100, 31] = 0; // end
-        parsingTable[NT_LIST - 100, 5] = 0;  // else
+        parsingTable[NT_LIST - 100, 31] = 0; 
+        parsingTable[NT_LIST - 100, 5] = 0;  
 
-        // Операторы
         parsingTable[NT_A - 100, 10] = 8; parsingTable[NT_A - 100, 3] = 9; parsingTable[NT_A - 100, 6] = 10;
         parsingTable[NT_A - 100, 8] = 11; parsingTable[NT_A - 100, 9] = 12; parsingTable[NT_A - 100, 30] = 42;
         
-        parsingTable[NT_X - 100, 22] = 14; // =
-        parsingTable[NT_X - 100, 17] = 15; // [
+        parsingTable[NT_X - 100, 22] = 14; 
+        parsingTable[NT_X - 100, 17] = 15; 
 
         parsingTable[NT_Y - 100, 10] = 16;
         parsingTable[NT_Y1 - 100, 17] = 17; parsingTable[NT_Y1 - 100, 16] = 0;
 
-        // Ветка Else
         foreach (int id in new[] { 19, 10, 3, 6, 8, 9, 31, 5 }) parsingTable[NT_B - 100, id] = 0;
         parsingTable[NT_B - 100, 5] = 19; 
 
-        // Выражения
         int[] exprStarts = { 10, 29, 15, 12 };
         foreach (int id in exprStarts) {
             parsingTable[NT_S - 100, id] = 21; 
@@ -61,25 +56,24 @@ public class Parser
             parsingTable[NT_V - 100, id] = 41;
         }
 
-        // Хвосты выражений (Epsilon переходы)
-        int[] follows = { 16, 18, 19, 23, 24, 25, 26, 27, 28, 4, 7, 5, 31 };
+        // Хвосты (Epsilon). ОЧЕНЬ ВАЖНО: добавили 11, 12, 13, 14 (+ - * /) для правильного выхода из NT_F1
+        int[] follows = { 16, 18, 19, 23, 24, 25, 26, 27, 28, 4, 7, 5, 31, 11, 12, 13, 14 };
         foreach (int id in follows) {
             parsingTable[NT_U - 100, id] = 0;
             parsingTable[NT_W - 100, id] = 0;
             parsingTable[NT_F1 - 100, id] = 0;
         }
-        // Специально для термов (W) - перед сложением идет умножение
-        parsingTable[NT_W - 100, 11] = 0; // +
-        parsingTable[NT_W - 100, 12] = 0; // -
-        // Специально для F1 - после id может идти + или -
-        parsingTable[NT_F1 - 100, 11] = 0;
-        parsingTable[NT_F1 - 100, 12] = 0;
 
-        parsingTable[NT_U - 100, 11] = 23; parsingTable[NT_U - 100, 12] = 24;
-        parsingTable[NT_W - 100, 13] = 26; parsingTable[NT_W - 100, 14] = 27;
+        // Операции в хвостах
+        parsingTable[NT_U - 100, 11] = 23; // +
+        parsingTable[NT_U - 100, 12] = 24; // -
+        parsingTable[NT_W - 100, 13] = 26; // *
+        parsingTable[NT_W - 100, 14] = 27; // /
 
-        parsingTable[NT_F - 100, 15] = 29; parsingTable[NT_F - 100, 10] = 30; 
-        parsingTable[NT_F - 100, 29] = 31; parsingTable[NT_F - 100, 12] = 32;
+        parsingTable[NT_F - 100, 15] = 29; 
+        parsingTable[NT_F - 100, 10] = 30; 
+        parsingTable[NT_F - 100, 29] = 31; 
+        parsingTable[NT_F - 100, 12] = 32;
         parsingTable[NT_F1 - 100, 17] = 33;
         
         parsingTable[NT_O - 100, 23] = 35; parsingTable[NT_O - 100, 24] = 36; 
@@ -93,6 +87,7 @@ public class Parser
         Stack<int> gStack = new Stack<int>();
         gStack.Push(NT_P);
         int tIdx = 0;
+        bool isInBody = false; // Флаг для игнорирования ID в объявлениях
 
         while (gStack.Count > 0)
         {
@@ -105,13 +100,19 @@ public class Parser
             {
                 if (top == curr.Id)
                 {
-                    if (curr.Id == 30 && rpn.Count == 0) rpn.Add("bp");
-                    if (curr.Id == 10 || curr.Id == 29) rpn.Add(curr.Value);
+                    if (curr.Id == 30) { 
+                        if (!isInBody && rpn.Count == 0) rpn.Add("bp");
+                        isInBody = true; 
+                    }
+                    if (curr.Id == 31) { /* Можно сбросить флаг, если нет вложенности */ }
+
+                    // Добавляем в ОПС только если мы ВНУТРИ begin...end
+                    if (isInBody && (curr.Id == 10 || curr.Id == 29)) rpn.Add(curr.Value);
                     tIdx++;
                 }
                 else
                 {
-                    Console.WriteLine($"[Error] Ожидался токен {top}, но найден {curr.Value} (ID:{curr.Id}) на строке {curr.Line}");
+                    Console.WriteLine($"[Error] Ожидался токен ID:{top}, но найден '{curr.Value}' (ID:{curr.Id}) на строке {curr.Line}");
                     return false;
                 }
             }
@@ -120,7 +121,7 @@ public class Parser
                 int rule = parsingTable[top - 100, curr.Id];
                 if (rule == -1)
                 {
-                    Console.WriteLine($"[Error] Нет правила для нетерминала {top} и токена {curr.Value} (ID:{curr.Id}) на строке {curr.Line}");
+                    Console.WriteLine($"[Error] Нет правила для нетерминала {top} и токена '{curr.Value}' (ID:{curr.Id}) на строке {curr.Line}");
                     return false;
                 }
                 if (rule != 0) PushRule(rule, gStack);

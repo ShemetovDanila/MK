@@ -1,0 +1,17 @@
+int1 arr[3];
+int max;
+begin
+    arr[0] = 15;
+    arr[1] = 42;
+    arr[2] = 7;
+    
+    if (arr[0] > arr[1]) then
+        max = arr[0];
+    else
+        max = arr[1];
+        
+    if (arr[2] > max) then
+        max = arr[2];
+        
+    write(max);
+end
