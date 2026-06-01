@@ -42,7 +42,6 @@ class Program
                 Console.WriteLine("Выполнение прервано из-за синтаксической ошибки.");
                 return;
             }
-
             // 4. Вызов Интерпретатора ОПС
             Interpreter interpreter = new Interpreter();
             interpreter.Execute(rpn);

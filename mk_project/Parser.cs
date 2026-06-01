@@ -9,7 +9,7 @@ public class Parser
     private const int NT_P  = 100; // Программа
     private const int NT_R  = 101; // Список объявлений обычных переменных (int)
     private const int NT_L  = 102; // Список объявлений массивов (int1)
-    private const int NT_A  = 103; // Список операторов внутри блока
+    private const int NT_A  = 103; // Один оператор внутри блока
     private const int NT_X  = 104; // Правая часть оператора присваивания
     private const int NT_Y  = 105; // Переменная внутри оператора read
     private const int NT_Y1 = 106; // Необязательный индекс переменной в операторе read
@@ -22,6 +22,7 @@ public class Parser
     private const int NT_F1 = 113; // Необязательный индекс в выражении
     private const int NT_O  = 114; // Операция сравнения
     private const int NT_V  = 115; // Условие (для if/while)
+    private const int NT_LIST = 116; // Список операторов
 
     // ── Семантические маркеры (отрицательные, чтобы не путать с терминалами) ─
     private const int ACT_ASSIGN      = -14;
@@ -46,14 +47,13 @@ public class Parser
     private const int ERROR_RULE   = -1;
     private const int EPSILON_RULE =  0;
 
-    private readonly int[,] parsingTable = new int[16, 35];
+    private readonly int[,] parsingTable = new int[17, 35];
 
-    // whileStartStack — стек адресов начала while (для генерации обратного УП)
-    // whileJfStack   — стек индексов заглушки jf (для патча адреса выхода из цикла)
+    // Стек адресов начала while и индексов заглушки jf
     private Stack<int> whileStartStack = new Stack<int>();
     private Stack<int> whileJfStack    = new Stack<int>();
 
-    // ifLabelStack — стек заглушек для if/else
+    // Стек заглушек для if/else
     private Stack<int> ifLabelStack = new Stack<int>();
 
     public Parser()
@@ -71,15 +71,29 @@ public class Parser
         // NT_P
         parsingTable[NT_P - NON_TERM_START, 1]  = 1;  // P -> int R P
         parsingTable[NT_P - NON_TERM_START, 2]  = 2;  // P -> int1 L P
-        parsingTable[NT_P - NON_TERM_START, 30] = 3;  // P -> begin A end
+        parsingTable[NT_P - NON_TERM_START, 30] = 3;  // P -> begin LIST end
 
         // NT_R
+        parsingTable[NT_R - NON_TERM_START, 1] = EPSILON_RULE;
+        parsingTable[NT_R - NON_TERM_START, 2] = EPSILON_RULE;
         parsingTable[NT_R - NON_TERM_START, 10] = 4;
         parsingTable[NT_R - NON_TERM_START, 30] = EPSILON_RULE;
 
         // NT_L
+        parsingTable[NT_L - NON_TERM_START, 1] = EPSILON_RULE;
+        parsingTable[NT_L - NON_TERM_START, 2] = EPSILON_RULE;
         parsingTable[NT_L - NON_TERM_START, 10] = 6;
         parsingTable[NT_L - NON_TERM_START, 30] = EPSILON_RULE;
+
+        // NT_LIST
+        parsingTable[NT_LIST - NON_TERM_START, 10] = 43;
+        parsingTable[NT_LIST - NON_TERM_START, 3]  = 43;
+        parsingTable[NT_LIST - NON_TERM_START, 6]  = 43;
+        parsingTable[NT_LIST - NON_TERM_START, 8]  = 43;
+        parsingTable[NT_LIST - NON_TERM_START, 9]  = 43;
+        parsingTable[NT_LIST - NON_TERM_START, 30] = 43;
+        parsingTable[NT_LIST - NON_TERM_START, 31] = EPSILON_RULE;
+        parsingTable[NT_LIST - NON_TERM_START, 5]  = EPSILON_RULE;
 
         // NT_A
         parsingTable[NT_A - NON_TERM_START, 10] = 8;
@@ -87,8 +101,7 @@ public class Parser
         parsingTable[NT_A - NON_TERM_START, 6]  = 10;
         parsingTable[NT_A - NON_TERM_START, 8]  = 11;
         parsingTable[NT_A - NON_TERM_START, 9]  = 12;
-        parsingTable[NT_A - NON_TERM_START, 31] = EPSILON_RULE;
-        parsingTable[NT_A - NON_TERM_START, 5]  = EPSILON_RULE;
+        parsingTable[NT_A - NON_TERM_START, 30] = 42;
 
         // NT_X
         parsingTable[NT_X - NON_TERM_START, 22] = 14;
@@ -215,30 +228,26 @@ public class Parser
                     case ACT_GE:     rpn.Add(">=");    break;
                     case ACT_INDEX:  rpn.Add("index"); break;
 
-                    // ИСПРАВЛЕНИЕ #7: унарный минус — отдельная команда "neg"
                     case ACT_NEG:
                         rpn.Add("neg");
                         break;
 
-                    // ИСПРАВЛЕНИЕ #4 (while — шаг 1): запоминаем адрес начала цикла
                     case ACT_WHILE_START:
                         whileStartStack.Push(rpn.Count);
                         break;
 
-                    // ИСПРАВЛЕНИЕ #4 (while — шаг 2): после условия ставим jf с заглушкой
                     case ACT_WHILE_JF:
-                        whileJfStack.Push(rpn.Count);   // индекс заглушки
-                        rpn.Add("[WHILE_END_PTR]");
+                        whileJfStack.Push(rpn.Count);
+                        rpn.Add("0"); // Заглушка
                         rpn.Add("jf");
                         break;
 
-                    // ИСПРАВЛЕНИЕ #4 (while — шаг 3): конец тела — УП назад + патч выхода
                     case ACT_WHILE_END:
                         int startAddr = whileStartStack.Pop();
                         int jfIdx     = whileJfStack.Pop();
-                        rpn.Add(startAddr.ToString()); // адрес возврата к началу
+                        rpn.Add(startAddr.ToString());
                         rpn.Add("УП");
-                        rpn.DynamicAddressPatch(jfIdx); // патчим [WHILE_END_PTR]
+                        rpn[jfIdx] = rpn.Count.ToString(); // Прямой патчинг адреса
                         break;
                 }
                 continue;
@@ -252,7 +261,7 @@ public class Parser
                     grammarStack.Pop();
 
                     // Маркер начала блока
-                    if (currentToken.Id == 30) rpn.Add("bp");
+                    if (currentToken.Id == 30 && rpn.Count == 0) rpn.Add("bp");
 
                     // Операнды → в ОПС
                     if (currentToken.Id == 10 || currentToken.Id == 28 || currentToken.Id == 29)
@@ -262,7 +271,7 @@ public class Parser
                     if (currentToken.Id == 16 && grammarStack.Count > 0 && grammarStack.Peek() == 4)
                     {
                         ifLabelStack.Push(rpn.Count);
-                        rpn.Add("[IF_FALSE_PTR]");
+                        rpn.Add("0"); // Заглушка
                         rpn.Add("jf");
                     }
 
@@ -271,12 +280,13 @@ public class Parser
                     {
                         int ifFalseIdx = ifLabelStack.Pop();
                         ifLabelStack.Push(rpn.Count);
-                        rpn.Add("[ELSE_END_PTR]");
+                        rpn.Add("0"); // Заглушка
                         rpn.Add("УП");
-                        rpn.DynamicAddressPatch(ifFalseIdx);
+                        rpn[ifFalseIdx] = rpn.Count.ToString();
                     }
 
-                    tokenIdx++;
+                    tokenIdx++; // Продвигаемся к следующему токену
+                    continue;   // ВАЖНО: Переходим к следующей итерации while
                 }
                 else
                 {
@@ -317,7 +327,7 @@ public class Parser
 
         // Закрываем незапатченные метки одиночных if (без else)
         while (ifLabelStack.Count > 0)
-            rpn.DynamicAddressPatch(ifLabelStack.Pop());
+            rpn[ifLabelStack.Pop()] = rpn.Count.ToString();
 
         if (grammarStack.Count == 0)
         {
@@ -350,10 +360,10 @@ public class Parser
                 grammarStack.Push(2);    // 'int1'
                 break;
 
-            // P -> begin A end
+            // P -> begin LIST end
             case 3:
                 grammarStack.Push(31);   // 'end'
-                grammarStack.Push(NT_A);
+                grammarStack.Push(NT_LIST);
                 grammarStack.Push(30);   // 'begin'
                 break;
 
@@ -374,19 +384,14 @@ public class Parser
                 grammarStack.Push(10);   // id
                 break;
 
-            // A -> id X ; A
+            // A -> id X ;
             case 8:
-                grammarStack.Push(NT_A);
                 grammarStack.Push(19);   // ';'
                 grammarStack.Push(NT_X);
                 grammarStack.Push(10);   // id  ← матч добавит id в ОПС
                 break;
 
-            // ИСПРАВЛЕНИЕ #3 (if): добавлен терминал 3 ('if') в стек.
             // A -> if ( V ) then A B
-            // jf генерируется в Parse при матче ')' перед 'then'.
-            // УП для else генерируется в Parse при матче 'else'.
-            // Патч if-false и else-end — в Parse после разбора B.
             case 9:
                 grammarStack.Push(NT_B);
                 grammarStack.Push(NT_A);
@@ -394,14 +399,11 @@ public class Parser
                 grammarStack.Push(16);   // ')'
                 grammarStack.Push(NT_V);
                 grammarStack.Push(15);   // '('
-                grammarStack.Push(3);    // 'if'  ← ИСПРАВЛЕНИЕ
+                grammarStack.Push(3);    // 'if'
                 break;
 
-            // ИСПРАВЛЕНИЕ #3, #4 (while): добавлен 'while' (6), реализована логика переходов.
             // A -> while ( V ) do A
-            // ОПС: [ACT_WHILE_START] while ( V ) [ACT_WHILE_JF] do <тело> [ACT_WHILE_END]
             case 10:
-                grammarStack.Push(NT_A);           // следующий оператор после while
                 grammarStack.Push(ACT_WHILE_END);  // генерирует УП + патчит jf
                 grammarStack.Push(NT_A);           // тело цикла
                 grammarStack.Push(7);              // 'do'
@@ -410,43 +412,37 @@ public class Parser
                 grammarStack.Push(NT_V);           // условие
                 grammarStack.Push(15);             // '('
                 grammarStack.Push(ACT_WHILE_START);// фиксирует адрес начала
-                grammarStack.Push(6);              // 'while'  ← ИСПРАВЛЕНИЕ
+                grammarStack.Push(6);              // 'while'
                 break;
 
-            // ИСПРАВЛЕНИЕ #3 (read): добавлен терминал 8 ('read').
-            // A -> read ( Y ) ; A
+            // A -> read ( Y ) ;
             case 11:
-                grammarStack.Push(NT_A);
                 grammarStack.Push(19);      // ';'
                 grammarStack.Push(ACT_READ);
                 grammarStack.Push(16);      // ')'
                 grammarStack.Push(NT_Y);
                 grammarStack.Push(15);      // '('
-                grammarStack.Push(8);       // 'read'  ← ИСПРАВЛЕНИЕ
+                grammarStack.Push(8);       // 'read'
                 break;
 
-            // ИСПРАВЛЕНИЕ #3 (write): добавлен терминал 9 ('write').
-            // A -> write ( S ) ; A
+            // A -> write ( S ) ;
             case 12:
-                grammarStack.Push(NT_A);
                 grammarStack.Push(19);       // ';'
                 grammarStack.Push(ACT_WRITE);
                 grammarStack.Push(16);       // ')'
                 grammarStack.Push(NT_S);
                 grammarStack.Push(15);       // '('
-                grammarStack.Push(9);        // 'write'  ← ИСПРАВЛЕНИЕ
+                grammarStack.Push(9);        // 'write'
                 break;
 
-            // ИСПРАВЛЕНИЕ #1: X -> = S — добавлен ACT_ASSIGN.
-            // Без него '=' никогда не попадало в ОПС.
+            // X -> = S
             case 14:
-                grammarStack.Push(ACT_ASSIGN); // ← ИСПРАВЛЕНИЕ
+                grammarStack.Push(ACT_ASSIGN);
                 grammarStack.Push(NT_S);
                 grammarStack.Push(22);         // '='
                 break;
 
             // X -> [ S ] = S  (присваивание элементу массива)
-            // id уже в ОПС; после индексного выражения — "index", потом = S, потом ACT_ASSIGN
             case 15:
                 grammarStack.Push(ACT_ASSIGN);
                 grammarStack.Push(NT_S);
@@ -457,24 +453,21 @@ public class Parser
                 grammarStack.Push(17);    // '['
                 break;
 
-            // ИСПРАВЛЕНИЕ (read-id): Y -> id Y1
-            // Терминал id (10) должен явно лежать в стеке для матча —
-            // иначе имя переменной не попадёт в ОПС.
+            // Y -> id Y1
             case 16:
                 grammarStack.Push(NT_Y1);
-                grammarStack.Push(10);   // id ← ИСПРАВЛЕНИЕ
+                grammarStack.Push(10);   // id
                 break;
 
-            // ИСПРАВЛЕНИЕ #2: Y1 -> [ S ] — добавлена '[' (17).
+            // Y1 -> [ S ]
             case 17:
                 grammarStack.Push(18);       // ']'
                 grammarStack.Push(ACT_INDEX);
                 grammarStack.Push(NT_S);
-                grammarStack.Push(17);       // '['  ← ИСПРАВЛЕНИЕ
+                grammarStack.Push(17);       // '['
                 break;
 
             // B -> else A
-            // 'else' потребляется как терминал (в Parse при матче 5 генерируется УП)
             case 19:
                 grammarStack.Push(NT_A);
                 grammarStack.Push(5);     // 'else'
@@ -524,32 +517,32 @@ public class Parser
                 grammarStack.Push(14);    // '/'
                 break;
 
-            // ИСПРАВЛЕНИЕ #6: F -> ( S ) — добавлена '(' (15).
+            // F -> ( S )
             case 29:
                 grammarStack.Push(16);    // ')'
                 grammarStack.Push(NT_S);
-                grammarStack.Push(15);    // '('  ← ИСПРАВЛЕНИЕ
+                grammarStack.Push(15);    // '('
                 break;
 
-            // F -> id F1  (id попадёт в ОПС при матче терминала 10)
+            // F -> id F1
             case 30:
                 grammarStack.Push(NT_F1);
+                grammarStack.Push(10);
                 break;
 
-            // ИСПРАВЛЕНИЕ #5: F -> num — ничего в стек не кладём.
-            // num уже добавлен в ОПС при матче терминала.
+            // F -> num (ничего в стек не кладем, обрабатывается как терминал)
             case 31:
-                break; // ← ИСПРАВЛЕНИЕ
+                grammarStack.Push(28);
+                break;
 
-            // ИСПРАВЛЕНИЕ #7: F -> - F (унарный минус)
-            // Потребляем '-', разбираем F, затем ACT_NEG генерирует "neg" в ОПС.
+            // F -> - F (унарный минус)
             case 32:
                 grammarStack.Push(ACT_NEG);
                 grammarStack.Push(NT_F);
                 grammarStack.Push(12);    // '-'
                 break;
 
-            // F1 -> [ S ]  (чтение элемента массива в выражении)
+            // F1 -> [ S ]
             case 33:
                 grammarStack.Push(18);       // ']'
                 grammarStack.Push(ACT_INDEX);
@@ -603,6 +596,17 @@ public class Parser
             case 41:
                 grammarStack.Push(NT_O);
                 grammarStack.Push(NT_S);
+                break;
+
+            case 42:
+                grammarStack.Push(31);   // 'end'
+                grammarStack.Push(NT_LIST); // Операторы ВНУТРИ блока
+                grammarStack.Push(30);   // 'begin'
+                break;
+                
+            case 43:
+                grammarStack.Push(NT_LIST);
+                grammarStack.Push(NT_A);
                 break;
         }
     }

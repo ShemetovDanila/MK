@@ -1,39 +1,35 @@
-int1 arr[5];
+int1 a[5];
 int i;
 int j;
 int temp;
 begin
-    // Заполнение массива тестовыми значениями (вручную, так как read для массивов может не поддерживаться)
-    arr[0] = 5;
-    arr[1] = 1;
-    arr[2] = 4;
-    arr[3] = 2;
-    arr[4] = 8;
+    a[0] = 5;
+    a[1] = 66;
+    a[2] = 3;
+    a[3] = 22;
+    a[4] = 23;
 
-    // Внешний цикл: i идет от 0 до 4
     i = 0;
     while (i < 4) do
     begin
-        // Внутренний цикл: j идет от 0 до 3
         j = 0;
-        while (j < 3) do
+        while (j < 4) do
         begin
-            // Если текущий элемент больше следующего, меняем их местами
-            if (arr[j] > arr[j + 1]) then
+            if (a[j] > a[j+1]) then
             begin
-                temp = arr[j];
-                arr[j] = arr[j + 1];
-                arr[j + 1] = temp;
-            end;
+                temp = a[j];
+                a[j] = a[j+1];
+                a[j+1] = temp;
+            end
             j = j + 1;
-        end;
+        end
         i = i + 1;
-    end;
+    end
 
-    // Вывод отсортированного массива
-    write(arr[0]);
-    write(arr[1]);
-    write(arr[2]);
-    write(arr[3]);
-    write(arr[4]);
+    i = 0;
+    while (i < 5) do
+    begin
+        write(a[i]);
+        i = i + 1;
+    end
 end
