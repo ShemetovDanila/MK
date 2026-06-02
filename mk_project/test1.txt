@@ -1,4 +1,3 @@
-int a;
 begin
     read(a);
     a = a + 5;

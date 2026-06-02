@@ -72,6 +72,23 @@ public class Interpreter
                 pc++; continue;
             }
 
+            if (command == "r")
+            {
+                if (stack.Count > 0)
+                {
+                    string varName = stack.Pop();
+                    
+                    string input = Console.ReadLine() ?? "";
+                    
+                    if (double.TryParse(input, NumberStyles.Any, CultureInfo.InvariantCulture, out double res))
+                    {
+                        if (varName.Contains("[")) AssignToArray(varName, res);
+                        else variables[varName] = res;
+                    }
+                }
+                pc++; continue;
+            }
+
             if (command == "w")
             {
                 double val = GetValue(stack.Pop());

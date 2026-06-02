@@ -139,6 +139,7 @@ public class Parser
         {
             case ACT_ASSIGN: rpn.Add("="); break;
             case ACT_WRITE: rpn.Add("w"); break;
+            case ACT_READ: rpn.Add("r"); break;
             case ACT_ADD: rpn.Add("+"); break;
             case ACT_SUB: rpn.Add("-"); break;
             case ACT_MUL: rpn.Add("*"); break;
