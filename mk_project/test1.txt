@@ -1,5 +1,9 @@
+int a;
 begin
+    write("Привет, введи перемную a");
     read(a);
     a = a + 5;
+    a = a + 14;
+    write("А вот перемная a + 19");
     write(a);
 end
