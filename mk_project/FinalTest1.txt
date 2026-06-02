@@ -1,0 +1,14 @@
+int a; int b; int c; int res;
+begin
+    write("Введите значение a:");
+    read(a);
+    write("Введите значение b:");
+    read(b);
+    write("Введите значение c:");
+    read(c);
+    
+    res = (a + b) * c / 2 - a * a;
+    
+    write("Результат по формуле (a+b)*c/2 - a*a равен");
+    write(res);
+end

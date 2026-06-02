@@ -1,0 +1,38 @@
+int1 a[10]; int n; int i; int j; int temp;
+begin
+    write("Введите n - число элементов массива (от 1 до 10)");
+    read(n);
+    
+    i = 0;
+    while (i < n) do
+    begin
+        write("Введите следующий элемент");
+        read(a[i]);
+        i = i + 1;
+    end
+
+    i = 0;
+    while (i < n - 1) do
+    begin
+        j = 0;
+        while (j < n - i - 1) do
+        begin
+            if (a[j] > a[j+1]) then
+            begin
+                temp = a[j];
+                a[j] = a[j+1];
+                a[j+1] = temp;
+            end
+            j = j + 1;
+        end
+        i = i + 1;
+    end
+
+    write("Отсортированный массив");
+    i = 0;
+    while (i < n) do
+    begin
+        write(a[i]);
+        i = i + 1;
+    end
+end

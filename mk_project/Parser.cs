@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
-/// Синтаксический анализатор LL(1). 
-/// Проверяет структуру программы и генерирует ОПС.
+/// Синтаксический анализатор. Реализует LL(1) разбор, проверку семантики
+/// и генерацию Обратной Польской Записи.
 /// </summary>
 public class Parser
 {
@@ -13,98 +13,76 @@ public class Parser
                       NT_B = 107, NT_S = 108, NT_T = 109, NT_U = 110, NT_W = 111, NT_F = 112, NT_F1 = 113, 
                       NT_O = 114, NT_V = 115, NT_LIST = 116;
 
-    // Маркеры семантических действий (ОПС команды)
     private const int ACT_ASSIGN = -14, ACT_WRITE = -12, ACT_READ = -11, ACT_ADD = -20, ACT_SUB = -21, 
                       ACT_MUL = -22, ACT_DIV = -23, ACT_LT = -24, ACT_GT = -25, ACT_EQ = -26, ACT_NE = -27, 
                       ACT_LE = -28, ACT_GE = -29, ACT_INDEX = -30, ACT_NEG = -31, ACT_WHILE_START = -32, 
                       ACT_WHILE_JF = -33, ACT_WHILE_END = -34, ACT_IF_JF = -35, ACT_IF_ELSE = -36, ACT_IF_END = -37;
 
-    // Таблица предсказывающего разбора
     private readonly int[,] parsingTable = new int[17, 100]; 
-    
-    // Вспомогательные стеки для вычисления адресов переходов в ОПС
     private Stack<int> whileStartStack = new Stack<int>(), whileJfStack = new Stack<int>(), ifLabelStack = new Stack<int>();
 
-    // Таблица символов для семантической проверки (была ли переменная объявлена)
+    // Список разрешенных (объявленных) имен переменных
     private HashSet<string> symbolTable = new HashSet<string>();
 
     public Parser() { InitializeParsingTable(); }
 
     /// <summary>
-    /// Инициализация управляющей таблицы LL(1) грамматики.
+    /// Заполнение таблицы управления разбором. 
+    /// Восстановлены критические переходы Epsilon для терминала begin.
     /// </summary>
     private void InitializeParsingTable()
     {
         for (int i = 0; i < 17; i++) for (int j = 0; j < 100; j++) parsingTable[i, j] = -1;
 
-        // Корневые правила программы
-        parsingTable[NT_P - 100, 1] = 1;  
-        parsingTable[NT_P - 100, 2] = 2;  
-        parsingTable[NT_P - 100, 30] = 3; 
+        // Корень программы
+        parsingTable[NT_P - 100, 1] = 1; parsingTable[NT_P - 100, 2] = 2; parsingTable[NT_P - 100, 30] = 3; 
 
-        parsingTable[NT_R - 100, 10] = 4; 
+        // Описания (R и L). Добавлены переходы 0 (Epsilon) для всех возможных продолжений.
+        parsingTable[NT_R - 100, 10] = 4; // id
         parsingTable[NT_R - 100, 1] = 0; parsingTable[NT_R - 100, 2] = 0; parsingTable[NT_R - 100, 30] = 0;
-
-        parsingTable[NT_L - 100, 10] = 6; 
+        
+        parsingTable[NT_L - 100, 10] = 6; // id
         parsingTable[NT_L - 100, 1] = 0; parsingTable[NT_L - 100, 2] = 0; parsingTable[NT_L - 100, 30] = 0;
 
-        // Обработка списка операторов
+        // Список операторов в теле
         foreach (int id in new[] { 10, 3, 6, 8, 9, 30 }) parsingTable[NT_LIST - 100, id] = 43;
-        parsingTable[NT_LIST - 100, 31] = 0; 
-        parsingTable[NT_LIST - 100, 5] = 0;  
+        parsingTable[NT_LIST - 100, 31] = 0; parsingTable[NT_LIST - 100, 5] = 0;
 
-        // Операторы присваивания, ветвлений и ввода-вывода
+        // Сами операторы
         parsingTable[NT_A - 100, 10] = 8; parsingTable[NT_A - 100, 3] = 9; parsingTable[NT_A - 100, 6] = 10;
         parsingTable[NT_A - 100, 8] = 11; parsingTable[NT_A - 100, 9] = 12; parsingTable[NT_A - 100, 30] = 42;
         
-        parsingTable[NT_X - 100, 22] = 14; 
-        parsingTable[NT_X - 100, 17] = 15; 
-
+        parsingTable[NT_X - 100, 22] = 14; parsingTable[NT_X - 100, 17] = 15; 
         parsingTable[NT_Y - 100, 10] = 16;
         parsingTable[NT_Y1 - 100, 17] = 17; parsingTable[NT_Y1 - 100, 16] = 0;
 
-        // Ветка Else
         foreach (int id in new[] { 19, 10, 3, 6, 8, 9, 31, 5 }) parsingTable[NT_B - 100, id] = 0;
         parsingTable[NT_B - 100, 5] = 19; 
 
-        // Инициализация правил для выражений (начало выражения)
-        int[] exprStarts = { 10, 29, 15, 12, 33 }; // 33 — это строковый литерал
+        // Выражения
+        int[] exprStarts = { 10, 29, 15, 12, 33 }; 
         foreach (int id in exprStarts) {
-            parsingTable[NT_S - 100, id] = 21; 
-            parsingTable[NT_T - 100, id] = 22; 
-            parsingTable[NT_V - 100, id] = 41;
+            parsingTable[NT_S - 100, id] = 21; parsingTable[NT_T - 100, id] = 22; parsingTable[NT_V - 100, id] = 41;
         }
 
-        // Хвосты выражений (обработка приоритетов операций)
+        // Хвосты выражений (Epsilon)
         int[] follows = { 16, 18, 19, 23, 24, 25, 26, 27, 28, 4, 7, 5, 31, 11, 12, 13, 14 };
         foreach (int id in follows) {
-            parsingTable[NT_U - 100, id] = 0;
-            parsingTable[NT_W - 100, id] = 0;
-            parsingTable[NT_F1 - 100, id] = 0;
+            parsingTable[NT_U - 100, id] = 0; parsingTable[NT_W - 100, id] = 0; parsingTable[NT_F1 - 100, id] = 0;
         }
 
-        parsingTable[NT_U - 100, 11] = 23; 
-        parsingTable[NT_U - 100, 12] = 24; 
-        parsingTable[NT_W - 100, 13] = 26; 
-        parsingTable[NT_W - 100, 14] = 27; 
+        parsingTable[NT_U - 100, 11] = 23; parsingTable[NT_U - 100, 12] = 24; 
+        parsingTable[NT_W - 100, 13] = 26; parsingTable[NT_W - 100, 14] = 27; 
 
-        // Факторы (базовые элементы)
-        parsingTable[NT_F - 100, 15] = 29; 
-        parsingTable[NT_F - 100, 10] = 30; 
-        parsingTable[NT_F - 100, 29] = 31; 
-        parsingTable[NT_F - 100, 12] = 32;
-        parsingTable[NT_F - 100, 33] = 44; // Новое правило: Фактор может быть строкой
-        parsingTable[NT_F1 - 100, 17] = 33;
+        parsingTable[NT_F - 100, 15] = 29; parsingTable[NT_F - 100, 10] = 30; 
+        parsingTable[NT_F - 100, 29] = 31; parsingTable[NT_F - 100, 12] = 32;
+        parsingTable[NT_F - 100, 33] = 44; parsingTable[NT_F1 - 100, 17] = 33;
         
-        // Операции сравнения
         parsingTable[NT_O - 100, 23] = 35; parsingTable[NT_O - 100, 24] = 36; 
         parsingTable[NT_O - 100, 25] = 37; parsingTable[NT_O - 100, 28] = 38; 
         parsingTable[NT_O - 100, 26] = 39; parsingTable[NT_O - 100, 27] = 40;
     }
 
-    /// <summary>
-    /// Основной цикл разбора со стеком нетерминалов.
-    /// </summary>
     public bool Parse(List<Token> tokens, out List<string> rpn)
     {
         rpn = new List<string>();
@@ -112,7 +90,7 @@ public class Parser
         Stack<int> gStack = new Stack<int>();
         gStack.Push(NT_P);
         int tIdx = 0;
-        bool isInBody = false; // Флаг, указывающий, что мы вошли в исполняемую часть (begin)
+        bool isInBody = false; 
 
         while (gStack.Count > 0)
         {
@@ -125,36 +103,41 @@ public class Parser
             {
                 if (top == curr.Id)
                 {
-                    // Начало исполняемого блока
                     if (curr.Id == 30) { 
                         if (!isInBody && rpn.Count == 0) rpn.Add("bp");
                         isInBody = true; 
                     }
 
-                    // Обработка идентификаторов (переменных)
+                    // Семантический контроль
                     if (curr.Id == 10) 
                     {
-                        if (!isInBody) symbolTable.Add(curr.Value); // Объявление переменной (вне begin)
+                        if (!isInBody) symbolTable.Add(curr.Value);
                         else {
-                            // Использование переменной (внутри begin) — проверяем, была ли объявлена
                             if (!symbolTable.Contains(curr.Value)) {
-                                Console.WriteLine($"\n[Семантическая ошибка] Переменная '{curr.Value}' не объявлена!");
+                                Console.WriteLine($"\n[Семантическая ошибка] Строка {curr.Line}, Позиция {curr.Column}: Переменная '{curr.Value}' не объявлена!");
                                 return false;
                             }
                             rpn.Add(curr.Value);
                         }
                     }
-                    // Числа и строки попадают в ОПС только из исполняемого блока
                     else if ((curr.Id == 29 || curr.Id == 33) && isInBody) rpn.Add(curr.Value);
                     
                     tIdx++;
                 }
-                else return false;
+                else
+                {
+                    Console.WriteLine($"\n[Синтаксическая ошибка] Строка {curr.Line}, Позиция {curr.Column}: Ожидался токен с ID {top}, но найден '{curr.Value}' (ID {curr.Id})");
+                    return false;
+                }
             }
             else
             {
                 int rule = parsingTable[top - 100, curr.Id];
-                if (rule == -1) return false;
+                if (rule == -1)
+                {
+                    Console.WriteLine($"\n[Синтаксическая ошибка] Строка {curr.Line}, Позиция {curr.Column}: Недопустимый токен '{curr.Value}' для нетерминала {top}");
+                    return false;
+                }
                 if (rule != 0) PushRule(rule, gStack);
             }
         }
@@ -164,9 +147,6 @@ public class Parser
         return true;
     }
 
-    /// <summary>
-    /// Семантические действия: запись команд в ОПС и патчинг адресов.
-    /// </summary>
     private void ProcessAction(int action, List<string> rpn)
     {
         switch (action)
@@ -186,17 +166,11 @@ public class Parser
             case ACT_GE: rpn.Add(">="); break;
             case ACT_INDEX: rpn.Add("index"); break;
             case ACT_NEG: rpn.Add("neg"); break;
-            
-            // Запоминаем адрес начала цикла
             case ACT_WHILE_START: whileStartStack.Push(rpn.Count); break;
-            // Генерируем заглушку jf и запоминаем её индекс для будущего патчинга
             case ACT_WHILE_JF: whileJfStack.Push(rpn.Count); rpn.Add("0"); rpn.Add("jf"); break;
-            // Переход в начало цикла и установка адреса выхода (патчинг заглушки)
             case ACT_WHILE_END: 
                 int start = whileStartStack.Pop(), jf = whileJfStack.Pop();
                 rpn.Add(start.ToString()); rpn.Add("УП"); rpn[jf] = rpn.Count.ToString(); break;
-                
-            // Патчинг меток для ветвления IF
             case ACT_IF_JF: ifLabelStack.Push(rpn.Count); rpn.Add("0"); rpn.Add("jf"); break;
             case ACT_IF_ELSE:
                 int falsePtr = ifLabelStack.Pop();
@@ -207,9 +181,6 @@ public class Parser
         }
     }
 
-    /// <summary>
-    /// Развертывание правил в стек (LIFO).
-    /// </summary>
     private void PushRule(int id, Stack<int> s)
     {
         switch (id)
@@ -249,7 +220,7 @@ public class Parser
             case 41: s.Push(NT_O); s.Push(NT_S); break;
             case 42: s.Push(31); s.Push(NT_LIST); s.Push(30); break;
             case 43: s.Push(NT_LIST); s.Push(NT_A); break;
-            case 44: s.Push(33); break; // Правило: Фактор -> Строка
+            case 44: s.Push(33); break; 
         }
     }
 }

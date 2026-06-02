@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 
 /// <summary>
-/// Представляет единицу текста (лексему).
+/// Лексическая единица программы. 
+/// Содержит тип (Id), текст (Value) и координаты для диагностики ошибок.
 /// </summary>
 public struct Token
 {
@@ -18,22 +19,18 @@ public struct Token
 }
 
 /// <summary>
-/// Лексический анализатор.
-/// Разбивает исходный код на токены, используя таблицу переходов состояний.
+/// Лексический анализатор (ДКА). 
+/// Преобразует текст в поток токенов.
 /// </summary>
 public class Lexer
 {
-    // Классы символов для управления переходами автомата
-    // Quote (10) — кавычка, Other (11) — любые прочие символы (запятые, точки с запятой внутри строк и т.д.)
+    // Определение классов входных символов
     private enum CharClass { Letter = 0, Digit = 1, Dot = 2, Space = 3, Sign = 4, Equal = 5, Less = 6, Greater = 7, Exclamation = 8, EOF = 9, Quote = 10, Other = 11 }
     
-    // Состояния конечного автомата
+    // Определение состояний автомата (9 - чтение строки)
     private enum State { Start = 0, Id = 1, IntPart = 2, AfterDot = 3, FracPart = 4, AfterEq = 5, AfterLt = 6, AfterGt = 7, AfterNe = 8, String = 9 }
 
-    /// <summary>
-    /// Матрица переходов ДКА.
-    /// Отрицательные значения — финальные состояния (коды токенов).
-    /// </summary>
+    // Матрица переходов ДКА
     private readonly int[,] transitionTable = new int[10, 12]
     {
         // <б>  <ц>   .    ' '  <с>   =    <    >    !    ┴    "   Other
@@ -46,7 +43,7 @@ public class Lexer
         {  -23,  -23, -100,  -23,  -23,  -26, -100, -100, -100,  -23, -23, -23 },  // 6: <
         {  -24,  -24, -100,  -24,  -24,  -27, -100, -100, -100,  -24, -24, -24 },  // 7: >
         { -100, -100, -100, -100, -100,  -28, -100, -100, -100, -100, -100, -100 }, // 8: !
-        {    9,   9,   9,    9,    9,    9,   9,   9,   9, -100, -33,   9 }   // 9: String (Принимает всё кроме ┴ и ")
+        {    9,   9,    9,    9,    9,    9,   9,   9,   9, -100, -33,   9 }   // 9: Строка
     };
 
     private readonly Dictionary<string, int> keywords = new Dictionary<string, int>
@@ -56,7 +53,7 @@ public class Lexer
     };
 
     /// <summary>
-    /// Превращает текст в список токенов.
+    /// Основной метод разбиения исходного текста на токены.
     /// </summary>
     public bool Tokenize(string source, out List<Token> tokens)
     {
@@ -64,7 +61,7 @@ public class Lexer
         int currentState = 0;
         string currentLexeme = "";
         int line = 1, column = 1, lexemeStartColumn = 1, i = 0;
-        source += "┴"; // Маркер конца файла
+        source += "┴"; 
 
         while (i < source.Length)
         {
@@ -74,6 +71,7 @@ public class Lexer
             CharClass charClass = GetCharClass(ch);
             int nextState = transitionTable[currentState, (int)charClass];
 
+            // Если встретили неизвестный символ
             if (nextState == -100)
             {
                 Console.WriteLine($"[Лексическая ошибка] Строка {line}, Позиция {column}: Недопустимый символ '{ch}'");
@@ -83,15 +81,13 @@ public class Lexer
             if (nextState < 0)
             {
                 if (nextState == -99) break;
-                
                 int finalCode = Math.Abs(nextState);
                 bool isLookahead = IsLookaheadAction(currentState, charClass);
 
-                // Накапливаем текущий символ, если это не заглядывание вперед
                 if (!isLookahead && ch != ' ' && ch != '\r' && ch != '\n' && charClass != CharClass.EOF)
                     currentLexeme += ch;
 
-                // Определение ID: ключевое слово, знак или специфический тип (строка/число)
+                // Определение ID токена (ключевое слово или тип)
                 int tokenId = (finalCode == 10) ? (keywords.ContainsKey(currentLexeme) ? keywords[currentLexeme] : 10) :
                               (finalCode == 11) ? GetSignId(currentLexeme.Length > 0 ? currentLexeme[0] : ch) : finalCode;
 
@@ -101,11 +97,10 @@ public class Lexer
             }
             else
             {
-                // Накапливаем символы (пробелы игнорируем только в состоянии Start)
+                // Накопление символов (пробелы поглощаются только внутри строк)
                 if (!(currentState == 0 && (ch == ' ' || ch == '\r' || ch == '\n'))) currentLexeme += ch;
                 currentState = nextState;
             }
-
             if (ch == '\n') { line++; column = 1; } else column++;
             i++;
         }
@@ -113,9 +108,6 @@ public class Lexer
         return true;
     }
 
-    /// <summary>
-    /// Классификация символа для таблицы переходов.
-    /// </summary>
     private CharClass GetCharClass(char ch)
     {
         if (ch == '┴') return CharClass.EOF;
@@ -129,14 +121,11 @@ public class Lexer
         if (ch == '>') return CharClass.Greater;
         if (ch == '!') return CharClass.Exclamation;
         if ("+-*/()[];".Contains(ch)) return CharClass.Sign;
-        return CharClass.Other; // Теперь запятые и прочее не вызывают ошибку сразу
+        return CharClass.Other; 
     }
 
     private int GetSignId(char c) => c switch { '+' => 11, '-' => 12, '*' => 13, '/' => 14, '(' => 15, ')' => 16, '[' => 17, ']' => 18, ';' => 19, _ => 11 };
 
-    /// <summary>
-    /// Нужно ли вернуть текущий символ во входной поток (не поглощать его данной лексемой).
-    /// </summary>
     private bool IsLookaheadAction(int state, CharClass @class)
     {
         if (state == 1 || state == 2 || state == 4) return true;

@@ -1,0 +1,4 @@
+int a;
+begin
+    a = 10; write(a) @
+end
