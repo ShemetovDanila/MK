@@ -1,0 +1,11 @@
+КОД (ну да, у нас получился Pascal):
+int a;
+begin
+  read(a);
+  if (a > 0) then
+    a = a + 10;
+  write(a);
+end
+
+Итоговая ОПС:
+1 bp a r a 0 > 15 jf a a 10 + = a w ret
