@@ -14,7 +14,7 @@
 | **5** | `else` | **14** | `/` | **22** | `=` | **30** | `begin` |
 | **6** | `while` | **15** | `(` | **23** | `<` | **31** | `end` |
 | **7** | `do` | **24** | `>` | **33** | `"string"` | **32** | `float` |
-| **8** | `read` | | | | | | |
+| **8** | `read` | **9** | `write` | | | | |
 
 **Таблица переходов детерминированного конечного автомата (ДКА):**
 | Сост. | б | ц | . | сп | зн | = | < | > | ! | ┴ | " | пр |
@@ -34,23 +34,23 @@
 
 ### 2. КС-грамматика языка
 
-1. $P \rightarrow int \ R \ P \ | \ int1 \ L \ P \ | \ begin \ LIST \ end$
-2. $R \rightarrow id \ ; \ R \ | \ \varepsilon$
-3. $L \rightarrow id \ [ \ num \ ] \ ; \ L \ | \ \varepsilon$
-4. $LIST \rightarrow A \ LIST \ | \ \varepsilon$
-5. $A \rightarrow id \ X \ ; \ | \ if \ ( \ V \ ) \ then \ A \ B \ | \ while \ ( \ V \ ) \ do \ A \ | \ read \ ( \ Y \ ) \ ; \ | \ write \ ( \ S \ ) \ ; \ | \ begin \ LIST \ end$
+1. $$P \rightarrow int \ R \ P \ | \ int1 \ L \ P \ | \ begin \ LIST \ end$$
+2. $R \rightarrow id \ ; \ R \ | \ \varlambda$
+3. $L \rightarrow id \ [ \ num \ ] \ ; \ L \ | \ \varlambda$
+4. $LIST \rightarrow A \ LIST \ | \ \varlambda$
+5. $$A \rightarrow id \ X \ ; \ | \ if \ ( \ V \ ) \ then \ A \ B \ | \ while \ ( \ V \ ) \ do \ A \ | \ read \ ( \ Y \ ) \ ; \ | \ write \ ( \ S \ ) \ ; \ | \ begin \ LIST \ end$$
 6. $X \rightarrow = \ S \ | \ [ \ S \ ] \ = \ S$
-7. $B \rightarrow else \ A \ | \ \varepsilon$
+7. $B \rightarrow else \ A \ | \ \varlambda$
 8. $V \rightarrow S \ O \ S$
 9. $O \rightarrow < \ | \ > \ | \ == \ | \ != \ | \ <= \ | \ >=$
 10. $S \rightarrow T \ U$
-11. $U \rightarrow + \ T \ U \ | \ - \ T \ U \ | \ \varepsilon$
+11. $U \rightarrow + \ T \ U \ | \ - \ T \ U \ | \ \varlambda$
 12. $T \rightarrow F \ W$
-13. $W \rightarrow * \ F \ W \ | \ / \ F \ W \ | \ \varepsilon$
+13. $W \rightarrow * \ F \ W \ | \ / \ F \ W \ | \ \varlambda$
 14. $F \rightarrow ( \ S \ ) \ | \ id \ F1 \ | \ num \ | \ string\_literal \ | \ - \ F$
-15. $F1 \rightarrow [ \ S \ ] \ | \ \varepsilon$
+15. $F1 \rightarrow [ \ S \ ] \ | \ \varlambda$
 16. $Y \rightarrow id \ Y1$
-17. $Y1 \rightarrow [ \ S \ ] \ | \ \varepsilon$
+17. $Y1 \rightarrow [ \ S \ ] \ | \ \varlambda$
 
 ---
 
@@ -59,22 +59,22 @@
 Для обеспечения LL(1)-разбора произведена факторизация и устранение левой рекурсии.
 
 1.  **P** $\rightarrow$ `int` **R** **P** | `int1` **L** **P** | `begin` **LIST** `end`
-2.  **R** $\rightarrow$ `id` `;` **R** | $\varepsilon$
-3.  **L** $\rightarrow$ `id` `[` `num` `]` `;` **L** | $\varepsilon$
-4.  **LIST** $\rightarrow$ **A** **LIST** | $\varepsilon$
+2.  **R** $\rightarrow$ `id` `;` **R** | $\varlambda$
+3.  **L** $\rightarrow$ `id` `[` `num` `]` `;` **L** | $\varlambda$
+4.  **LIST** $\rightarrow$ **A** **LIST** | $\varlambda$
 5.  **A** $\rightarrow$ `id` **X** `;` | `if` `(` **V** `)` `then` **A** **B** | `while` `(` **V** `)` `do` **A** | `read` `(` **Y** `)` `;` | `write` `(` **S** `)` `;` | `begin` **LIST** `end`
 6.  **X** $\rightarrow$ `=` **S** | `[` **S** `]` `=` **S**
-7.  **B** $\rightarrow$ `else` **A** | $\varepsilon$
+7.  **B** $\rightarrow$ `else` **A** | $\varlambda$
 8.  **V** $\rightarrow$ **S** **O** **S**
 9.  **O** $\rightarrow$ `<` | `>` | `==` | `!=` | `<=` | `>=`
 10. **S** $\rightarrow$ **T** **U**
-11. **U** $\rightarrow$ `+` **T** **U** | `-` **T** **U** | $\varepsilon$
+11. **U** $\rightarrow$ `+` **T** **U** | `-` **T** **U** | $\varlambda$
 12. **T** $\rightarrow$ **F** **W**
-13. **W** $\rightarrow$ `*` **F** **W** | `/` **F** **W** | $\varepsilon$
+13. **W** $\rightarrow$ `*` **F** **W** | `/` **F** **W** | $\varlambda$
 14. **F** $\rightarrow$ `(` **S** `)` | `id` **F1** | `num` | `string_literal` | `-` **F**
-15. **F1** $\rightarrow$ `[` **S** `]` | $\varepsilon$
+15. **F1** $\rightarrow$ `[` **S** `]` | $\varlambda$
 16. **Y** $\rightarrow$ `id` **Y1**
-17. **Y1** $\rightarrow$ `[` **S** `]` | $\varepsilon$
+17. **Y1** $\rightarrow$ `[` **S** `]` | $\varlambda$
 
 ---
 
@@ -88,11 +88,11 @@
 | P -> int1 L P | NT_P, NT_L, 2 (int1) |
 | P -> begin LIST end | 31 (end), NT_LIST, 30 (begin) |
 | R -> id ; R | NT_R, 19 (;), 10 (id) |
-| R -> epsilon | (пустое действие) |
+| R -> lambda | (пустое действие) |
 | L -> id [ num ] ; L | NT_L, 19 (;), 18 (]), 29 (num), 17 ([), 10 (id) |
 | L -> id [ num ] ; L | NT_L, 19 (;), 18 (]), 29 (num), 17 ([), 10 (id) |
 | LIST -> A LIST | NT_LIST, NT_A |
-| LIST -> epsilon | (пустое действие) |
+| LIST -> lambda | (пустое действие) |
 | A -> id X ; | 19 (;), NT_X, 10 (id) |
 | A -> if ( V ) then A B | ACT_IF_END, NT_B, NT_A, 4 (then), ACT_IF_JF, 16 ( ) ), NT_V, 15 ( ( ), 3 (if) |
 | A -> while ( V ) do A | ACT_WHILE_END, NT_A, 7 (do), ACT_WHILE_JF, 16 ( ) ), NT_V, 15 ( ( ), ACT_WHILE_START, 6 (while) |
@@ -102,7 +102,7 @@
 | X -> = S | ACT_ASSIGN, NT_S, 22 (=) |
 | X -> [ S ] = S | ACT_ASSIGN, NT_S, 22 (=), 18 (]), ACT_INDEX, NT_S, 17 ([) |
 | B -> else A | NT_A, ACT_IF_ELSE, 5 (else) |
-| B -> epsilon | (пустое действие) |
+| B -> lambda | (пустое действие) |
 | V -> S O S | NT_O, NT_S |
 | O -> < S | ACT_LT, NT_S, 23 (<) |
 | O -> > S | ACT_GT, NT_S, 24 (>) |
@@ -113,21 +113,21 @@
 | S -> T U | NT_U, NT_T |
 | U -> + T U | NT_U, ACT_ADD, NT_T, 11 (+) |
 | U -> - T U | NT_U, ACT_SUB, NT_T, 12 (-) |
-| U -> epsilon | (пустое действие) |
+| U -> lambda | (пустое действие) |
 | T -> F W | NT_W, NT_F |
 | W -> * F W | NT_W, ACT_MUL, NT_F, 13 (*) |
 | W -> / F W | NT_W, ACT_DIV, NT_F, 14 (/) |
-| W -> epsilon | (пустое действие) |
+| W -> lambda | (пустое действие) |
 | F -> ( S ) | 16 ( ) ), NT_S, 15 ( ( ) |
 | F -> id F1 | NT_F1, 10 (id) |
 | F -> num | 29 (num) |
 | F -> string_literal | 33 (string) |
 | F -> - F | ACT_NEG, NT_F, 12 (-) |
 | F1 -> [ S ] | 18 (]), ACT_INDEX, NT_S, 17 ([) |
-| F1 -> epsilon | (пустое действие) |
+| F1 -> lambda | (пустое действие) |
 | Y -> id Y1 | NT_Y1, 10 (id) |
 | Y1 -> [ S ] | 18 (]), ACT_INDEX, NT_S, 17 ([) |
-| Y1 -> epsilon | (пустое действие) |
+| Y1 -> lambda | (пустое действие) |
 
 ---
 
