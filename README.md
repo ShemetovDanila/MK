@@ -30,11 +30,15 @@
 
 ### 2. КС-грамматика языка
 
-1. $P \rightarrow \mathrm{int}\ R\ P \;|\; \mathrm{int1}\ L\ P \;|\; \mathrm{begin}\ LIST\ \mathrm{end}$
+1. $$
+P \rightarrow \text{int}\ R\ P \mid \text{int1}\ L\ P \mid \text{begin}\ LIST\ \text{end}
+$$
 2. $R \rightarrow id \ ; \ R \ | \ \lambda$
 3. $L \rightarrow id \ [ \ num \ ] \ ; \ L \ | \ \lambda$
 4. $LIST \rightarrow A \ LIST \ | \ \lambda$
-5. $A \rightarrow id\ X\ ; \;|\; \mathrm{if}(V)\ \mathrm{then}\ A\ B \;|\; \mathrm{while}(V)\ \mathrm{do}\ A \;|\; \mathrm{read}(Y)\ ; \;|\; \mathrm{write}(S)\ ; \;|\; \mathrm{begin}\ LIST\ \mathrm{end}$
+5. $$
+A \rightarrow id\ X\ ; \mid \text{if}(V)\ \text{then}\ A\ B \mid \text{while}(V)\ \text{do}\ A \mid \text{read}(Y)\ ; \mid \text{write}(S)\ ; \mid \text{begin}\ LIST\ \text{end}
+$$
 6. $X \rightarrow = \ S \ | \ [ \ S \ ] \ = \ S$
 7. $B \rightarrow else \ A \ | \ \lambda$
 8. $V \rightarrow S \ O \ S$
