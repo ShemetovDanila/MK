@@ -30,19 +30,11 @@
 
 ### 2. КС-грамматика языка
 
-1. $$P \rightarrow int \ R \ P \ | \ int1 \ L \ P \ | \ begin \ LIST \ end$$
-
-0. $$P \rightarrow \text{int} \ R \ P \mid \text{int1} \ L \ P \mid \text{begin} \ \text{LIST} \ \text{end}$$
-
-1113. $$P \rightarrow \text{int} \ R \ P \mid \text{int1} \ L \ P \mid \text{begin} \ \text{LIST} \ \text{end}$$
-
-1115. $$A \rightarrow \text{id} \ X \ ; \mid \text{if} \ ( V ) \ \text{then} \ A \ B \mid \text{while} \ ( V ) \ \text{do} \ A \mid \text{read} \ ( Y ) \ ; \mid \text{write} \ ( S ) \ ; \mid \text{begin} \ \text{LIST} \ \text{end}$$
-
-
+1. $ P \rightarrow int \ R \ P \ | \ int1 \ L \ P \ | \ begin \ LIST \ end $
 2. $R \rightarrow id \ ; \ R \ | \ \lambda$
 3. $L \rightarrow id \ [ \ num \ ] \ ; \ L \ | \ \lambda$
 4. $LIST \rightarrow A \ LIST \ | \ \lambda$
-5. $$A \rightarrow id \ X \ ; \ | \ if \ ( \ V \ ) \ then \ A \ B \ | \ while \ ( \ V \ ) \ do \ A \ | \ read \ ( \ Y \ ) \ ; \ | \ write \ ( \ S \ ) \ ; \ | \ begin \ LIST \ end$$
+5. $ A \rightarrow id \ X \ ; \ | \ if \ ( \ V \ ) \ then \ A \ B \ | \ while \ ( \ V \ ) \ do \ A \ | \ read \ ( \ Y \ ) \ ; \ | \ write \ ( \ S \ ) \ ; \ | \ begin \ LIST \ end $
 6. $X \rightarrow = \ S \ | \ [ \ S \ ] \ = \ S$
 7. $B \rightarrow else \ A \ | \ \lambda$
 8. $V \rightarrow S \ O \ S$
