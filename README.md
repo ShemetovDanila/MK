@@ -30,50 +30,23 @@
 
 ### 2. КС-грамматика языка
 
-1. $P \rightarrow \text{int}\ R\ P \mid \text{int1}\ L\ P \mid \text{begin}\ LIST\ \text{end}$
-
-2. $R \rightarrow id\ ;\ R \mid \lambda$
-
-3. $L \rightarrow id\ [num]\ ;\ L \mid \lambda$
-
-4. $LIST \rightarrow A\ LIST \mid \lambda$
-
-5. $A \rightarrow
-id\ X\ ;\;
-\mid\;
-\text{if}\ (V)\ \text{then}\ A\ B
-\mid\;
-\text{while}\ (V)\ \text{do}\ A
-\mid\;
-\text{read}(Y)\ ;
-\mid\;
-\text{write}(S)\ ;
-\mid\;
-\text{begin}\ LIST\ \text{end}$
-
-6. $X \rightarrow =\ S \mid [S]=S$
-
-7. $B \rightarrow \text{else}\ A \mid \lambda$
-
-8. $V \rightarrow S\ O\ S$
-
-9. $O \rightarrow < \mid > \mid == \mid != \mid \leq \mid \geq$
-
-10. $S \rightarrow T\ U$
-
-11. $U \rightarrow +\ T\ U \mid -\ T\ U \mid \lambda$
-
-12. $T \rightarrow F\ W$
-
-13. $W \rightarrow *\ F\ W \mid /\ F\ W \mid \lambda$
-
-14. $F \rightarrow (S) \mid id\ F1 \mid num \mid string\_literal \mid -F$
-
-15. $F1 \rightarrow [S] \mid \lambda$
-
-16. $Y \rightarrow id\ Y1$
-
-17. $Y1 \rightarrow [S] \mid \lambda$
+1. $P \rightarrow int\ R\ P \mid int1\ L\ P \mid begin\ LIST\ end$
+2. $R \rightarrow id \ ; \ R \ | \ \lambda$
+3. $L \rightarrow id \ [ \ num \ ] \ ; \ L \ | \ \lambda$
+4. $LIST \rightarrow A \ LIST \ | \ \lambda$
+5. $A \rightarrow id\ X\ ; \mid if(V)\ then\ A\ B \mid while(V)\ do\ A \mid read(Y)\ ; \mid write(S)\ ; \mid begin\ LIST\ end$
+6. $X \rightarrow = \ S \ | \ [ \ S \ ] \ = \ S$
+7. $B \rightarrow else \ A \ | \ \lambda$
+8. $V \rightarrow S \ O \ S$
+9. $O \rightarrow < \ | \ > \ | \ == \ | \ != \ | \ <= \ | \ >=$
+10. $S \rightarrow T \ U$
+11. $U \rightarrow + \ T \ U \ | \ - \ T \ U \ | \ \lambda$
+12. $T \rightarrow F \ W$
+13. $W \rightarrow * \ F \ W \ | \ / \ F \ W \ | \ \lambda$
+14. $F \rightarrow ( \ S \ ) \ | \ id \ F1 \ | \ num \ | \ string\_literal \ | \ - \ F$
+15. $F1 \rightarrow [ \ S \ ] \ | \ \lambda$
+16. $Y \rightarrow id \ Y1$
+17. $Y1 \rightarrow [ \ S \ ] \ | \ \lambda$
 
 ---
 
