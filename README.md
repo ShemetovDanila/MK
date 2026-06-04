@@ -30,11 +30,11 @@
 
 ### 2. КС-грамматика языка
 
-1. $P \rightarrow int\ R\ P \mid int1\ L\ P \mid begin\ LIST\ end$
+1. $ P \rightarrow int \ R \ P \ | \ int1 \ L \ P \ | \ begin \ LIST \ end $
 2. $R \rightarrow id \ ; \ R \ | \ \lambda$
 3. $L \rightarrow id \ [ \ num \ ] \ ; \ L \ | \ \lambda$
 4. $LIST \rightarrow A \ LIST \ | \ \lambda$
-5. $A \rightarrow id\ X\ ; \mid if(V)\ then\ A\ B \mid while(V)\ do\ A \mid read(Y)\ ; \mid write(S)\ ; \mid begin\ LIST\ end$
+5. $ A \rightarrow id \ X \ ; \ | \ if \ ( \ V \ ) \ then \ A \ B \ | \ while \ ( \ V \ ) \ do \ A \ | \ read \ ( \ Y \ ) \ ; \ | \ write \ ( \ S \ ) \ ; \ | \ begin \ LIST \ end $
 6. $X \rightarrow = \ S \ | \ [ \ S \ ] \ = \ S$
 7. $B \rightarrow else \ A \ | \ \lambda$
 8. $V \rightarrow S \ O \ S$
