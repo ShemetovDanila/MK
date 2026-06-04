@@ -1,7 +1,3 @@
-Вот полный набор теоретических материалов, адаптированный под ваш финальный программный продукт.
-
----
-
 ### 1. Список лексем и таблица переходов ДКА
 
 **Полный список лексем (ID):**
@@ -35,22 +31,23 @@
 ### 2. КС-грамматика языка
 
 1. $$P \rightarrow int \ R \ P \ | \ int1 \ L \ P \ | \ begin \ LIST \ end$$
-2. $R \rightarrow id \ ; \ R \ | \ \varlambda$
-3. $L \rightarrow id \ [ \ num \ ] \ ; \ L \ | \ \varlambda$
-4. $LIST \rightarrow A \ LIST \ | \ \varlambda$
+$$P \rightarrow \text{int} \ R \ P \mid \text{int1} \ L \ P \mid \text{begin} \ \text{LIST} \ \text{end}$$
+2. $R \rightarrow id \ ; \ R \ | \ \lambda$
+3. $L \rightarrow id \ [ \ num \ ] \ ; \ L \ | \ \lambda$
+4. $LIST \rightarrow A \ LIST \ | \ \lambda$
 5. $$A \rightarrow id \ X \ ; \ | \ if \ ( \ V \ ) \ then \ A \ B \ | \ while \ ( \ V \ ) \ do \ A \ | \ read \ ( \ Y \ ) \ ; \ | \ write \ ( \ S \ ) \ ; \ | \ begin \ LIST \ end$$
 6. $X \rightarrow = \ S \ | \ [ \ S \ ] \ = \ S$
-7. $B \rightarrow else \ A \ | \ \varlambda$
+7. $B \rightarrow else \ A \ | \ \lambda$
 8. $V \rightarrow S \ O \ S$
 9. $O \rightarrow < \ | \ > \ | \ == \ | \ != \ | \ <= \ | \ >=$
 10. $S \rightarrow T \ U$
-11. $U \rightarrow + \ T \ U \ | \ - \ T \ U \ | \ \varlambda$
+11. $U \rightarrow + \ T \ U \ | \ - \ T \ U \ | \ \lambda$
 12. $T \rightarrow F \ W$
-13. $W \rightarrow * \ F \ W \ | \ / \ F \ W \ | \ \varlambda$
+13. $W \rightarrow * \ F \ W \ | \ / \ F \ W \ | \ \lambda$
 14. $F \rightarrow ( \ S \ ) \ | \ id \ F1 \ | \ num \ | \ string\_literal \ | \ - \ F$
-15. $F1 \rightarrow [ \ S \ ] \ | \ \varlambda$
+15. $F1 \rightarrow [ \ S \ ] \ | \ \lambda$
 16. $Y \rightarrow id \ Y1$
-17. $Y1 \rightarrow [ \ S \ ] \ | \ \varlambda$
+17. $Y1 \rightarrow [ \ S \ ] \ | \ \lambda$
 
 ---
 
@@ -59,22 +56,22 @@
 Для обеспечения LL(1)-разбора произведена факторизация и устранение левой рекурсии.
 
 1.  **P** $\rightarrow$ `int` **R** **P** | `int1` **L** **P** | `begin` **LIST** `end`
-2.  **R** $\rightarrow$ `id` `;` **R** | $\varlambda$
-3.  **L** $\rightarrow$ `id` `[` `num` `]` `;` **L** | $\varlambda$
-4.  **LIST** $\rightarrow$ **A** **LIST** | $\varlambda$
+2.  **R** $\rightarrow$ `id` `;` **R** | $\lambda$
+3.  **L** $\rightarrow$ `id` `[` `num` `]` `;` **L** | $\lambda$
+4.  **LIST** $\rightarrow$ **A** **LIST** | $\lambda$
 5.  **A** $\rightarrow$ `id` **X** `;` | `if` `(` **V** `)` `then` **A** **B** | `while` `(` **V** `)` `do` **A** | `read` `(` **Y** `)` `;` | `write` `(` **S** `)` `;` | `begin` **LIST** `end`
 6.  **X** $\rightarrow$ `=` **S** | `[` **S** `]` `=` **S**
-7.  **B** $\rightarrow$ `else` **A** | $\varlambda$
+7.  **B** $\rightarrow$ `else` **A** | $\lambda$
 8.  **V** $\rightarrow$ **S** **O** **S**
 9.  **O** $\rightarrow$ `<` | `>` | `==` | `!=` | `<=` | `>=`
 10. **S** $\rightarrow$ **T** **U**
-11. **U** $\rightarrow$ `+` **T** **U** | `-` **T** **U** | $\varlambda$
+11. **U** $\rightarrow$ `+` **T** **U** | `-` **T** **U** | $\lambda$
 12. **T** $\rightarrow$ **F** **W**
-13. **W** $\rightarrow$ `*` **F** **W** | `/` **F** **W** | $\varlambda$
+13. **W** $\rightarrow$ `*` **F** **W** | `/` **F** **W** | $\lambda$
 14. **F** $\rightarrow$ `(` **S** `)` | `id` **F1** | `num` | `string_literal` | `-` **F**
-15. **F1** $\rightarrow$ `[` **S** `]` | $\varlambda$
+15. **F1** $\rightarrow$ `[` **S** `]` | $\lambda$
 16. **Y** $\rightarrow$ `id` **Y1**
-17. **Y1** $\rightarrow$ `[` **S** `]` | $\varlambda$
+17. **Y1** $\rightarrow$ `[` **S** `]` | $\lambda$
 
 ---
 
