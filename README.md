@@ -35,7 +35,7 @@
 3. $L \rightarrow id \ [ \ num \ ] \ ; \ L \ | \ \lambda$
 4. $LIST \rightarrow A \ LIST \ | \ \lambda$
 5. $A \to id \ X; \mid \texttt{if}(V) \ \texttt{then} \ A \ B \mid \texttt{while}(V) \ \texttt{do} \ A \mid \texttt{read}(Y); \mid \texttt{write}(S); \mid \texttt{begin} \ LIST \ \texttt{end}$
-6. $X \rightarrow = \ S \ | \ [ \ S \ ] \ = \ S$
+6. $X \to = \ S \ | \ [ \ S \ ] \ = \ S$
 7. $B \rightarrow else \ A \ | \ \lambda$
 8. $V \rightarrow S \ O \ S$
 9. $O \rightarrow < \ | \ > \ | \ == \ | \ != \ | \ <= \ | \ >=$
